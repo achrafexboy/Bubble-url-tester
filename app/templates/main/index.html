@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h1>URL Testing Tool</h1>
+    
+    <div id="loginSection" class="card">
+        <h2>Login Required</h2>
+        <div class="form-group">
+            <input type="password" id="password" placeholder="Enter password">
+            <button onclick="login()" class="btn-primary">Login</button>
+        </div>
+    </div>
+
+    <div id="mainSection" class="card hidden">
+        <div class="control-panel">
+            <div class="form-group">
+                <label for="urlCount">Number of URLs:</label>
+                <input type="number" id="urlCount" min="1" max="10" value="5">
+            </div>
+            <button onclick="generateUrls()" class="btn-primary">Generate URLs</button>
+        </div>
+        
+        <div id="results" class="results">
+            <div id="urlList"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const api = {
+        login: async (password) => {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password})
+            });
+            if (!response.ok) throw new Error('Login failed');
+            return response.json();
+        },
+        
+        generateUrls: async (count) => {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({count})
+            });
+            if (!response.ok) throw new Error('Failed to generate URLs');
+            return response.json();
+        }
+    };
+
+    async function login() {
+        try {
+            await api.login(document.getElementById('password').value);
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+        } catch (error) {
+            alert('Invalid password');
+        }
+    }
+
+    async function generateUrls() {
+        try {
+            const {urls} = await api.generateUrls(
+                document.getElementById('urlCount').value
+            );
+            document.getElementById('urlList').innerHTML = urls
+                .map(item => `
+                    <div class="url-item">
+                        <div class="noun">${item.noun}</div>
+                        <div class="url">${item.url}</div>
+                    </div>
+                `).join('');
+        } catch (error) {
+            alert('Failed to generate URLs');
+        }
+    }
+</script>
+{% endblock %}
